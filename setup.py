@@ -23,9 +23,9 @@ with codecs.open('README.rst', 'r', encoding='UTF-8') as readme:
     LONG_DESCRIPTION = ''.join(readme)
 
 if sys.version_info[0] < 3:
-    DEPS = ['ludolph', 'dnspython']
+    DEPS = ['ludolph', 'dnspython', 'requests']
 else:
-    DEPS = ['ludolph', 'dnspython3']
+    DEPS = ['ludolph', 'dnspython3', 'requests']
 
 CLASSIFIERS = [
     'Environment :: Console',
