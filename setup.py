@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# This file is part of Ludolph: Erigones API plugin.
 # Copyright (C) 2015 Erigones, s. r. o.
-# All Rights Reserved
 #
-# This software is licensed as described in the README.rst and LICENSE
-# files, which you should have received as part of this distribution.
+# See the LICENSE file for copying permission.
 
 import sys
 import codecs
@@ -15,10 +14,10 @@ except ImportError:
     from distutils.core import setup
 
 # noinspection PyPep8Naming
-#from ludolph-hello-world.__init__ import __version__ as VERSION
+#from ludolph-es.__init__ import __version__ as VERSION
 VERSION = '1.0'
 
-DESCRIPTION = 'Hello world plugin'
+DESCRIPTION = 'Erigones API plugin'
 
 with codecs.open('README.rst', 'r', encoding='UTF-8') as readme:
     LONG_DESCRIPTION = ''.join(readme)
@@ -32,7 +31,6 @@ CLASSIFIERS = [
     'Environment :: Console',
     'Environment :: Plugins',
     'Intended Audience :: Developers',
-    'Intended Audience :: Education',
     'Intended Audience :: System Administrators',
     'License :: OSI Approved :: MIT License',
     'Operating System :: MacOS',
@@ -46,21 +44,21 @@ CLASSIFIERS = [
 ]
 
 packages = [
-    'ludolph-hello-world',
+    'ludolph-es',
 ]
 
 setup(
-    name='ludolph-hello-world',
+    name='ludolph-es',
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     author='Erigones',
     author_email='erigones [at] erigones.com',
-    url='https://github.com/erigones/ludolph-plugin-skeleton/',
+    url='https://github.com/erigones/ludolph-es/',
     license='MIT',
     packages=packages,
     install_requires=DEPS,
-    platforms='Linux',
+    platforms='any',
     classifiers=CLASSIFIERS,
     include_package_data=True
 )

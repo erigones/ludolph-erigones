@@ -1,10 +1,10 @@
-ludolph-plugin-skeleton
-#######################
+ludolph-es
+##########
 
-Sample hello world plugin for `Ludolph <https://github.com/erigones/Ludolph>`_
+Erigones API plugin for `Ludolph <https://github.com/erigones/Ludolph>`_
 
-.. image:: https://badge.fury.io/py/ludolph-hello-world.png
-    :target: http://badge.fury.io/py/ludolph-hello-world
+.. image:: https://badge.fury.io/py/ludolph-es.png
+    :target: http://badge.fury.io/py/ludolph-es
 
 
 Installation
@@ -12,11 +12,14 @@ Installation
 
 - Install the latest released version using pip::
 
-    pip install ludolph-hello-world
+    pip install ludolph-es
 
 - Update Ludolph configuration file with plugin to load::
 
-    [ludolph-hello-world.base]
+    [ludolph-es.erigones]
+    api_url = https://my.erigones.com/api
+    username = username@example.com
+    password = Passw0rd
 
 - Reload Ludolph::
 
@@ -31,13 +34,12 @@ Installation
 Links
 -----
 
-- Wiki: https://github.com/erigones/Ludolph/wiki/How-to-create-plugin#create-3rd-party-plugin
-- Bug Tracker: https://github.com/erigones/ludolph-plugin-skeleton/issues
+- ES API Documentation: https://my.erigones.com/static/api/doc/
+- Bug Tracker: https://github.com/erigones/ludolph-es/issues
 - Twitter: https://twitter.com/erigones
-
 
 License
 -------
 
-For more information see the `LICENSE <https://github.com/erigones/ludolph-plugin-skeleton/blob/master/LICENSE>`_ file.
+For more information see the `LICENSE <https://github.com/erigones/ludolph-es/blob/master/LICENSE>`_ file.
 
