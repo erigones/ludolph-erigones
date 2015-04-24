@@ -9,7 +9,7 @@ import logging
 # noinspection PyPackageRequirements
 import requests
 
-from .__init__ import __version__ as VERSION
+from es.__init__ import __version__ as VERSION
 from ludolph.command import command, parameter_required, admin_required
 from ludolph.message import red, green, blue
 from ludolph.plugins.plugin import LudolphPlugin
@@ -25,7 +25,7 @@ class Erigones(LudolphPlugin):
 
     Add to ludolph.cfg::
 
-        [ludolph-es.erigones]
+        [es.erigones]
         api_url = https://my.erigones.com/api
         username = username@example.com
         password = Passw0rd
@@ -254,5 +254,5 @@ class Erigones(LudolphPlugin):
         return '\n'.join(out)
 
     @command
-    def ludolph_es_version(self, msg):
+    def es_version(self, msg):
         return 'ludolph-es version: '+ VERSION
