@@ -16,7 +16,7 @@ Installation
 
 - Update Ludolph configuration file with plugin to load::
 
-    [ludolph-es.erigones]
+    [es.erigones]
     api_url = https://my.erigones.com/api
     username = username@example.com
     password = Passw0rd
@@ -36,6 +36,7 @@ Links
 
 - ES API Documentation: https://my.erigones.com/static/api/doc/
 - Bug Tracker: https://github.com/erigones/ludolph-es/issues
+- Google+ Community: https://plus.google.com/u/0/communities/112192048027134229675  
 - Twitter: https://twitter.com/erigones
 
 License

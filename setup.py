@@ -14,8 +14,7 @@ except ImportError:
     from distutils.core import setup
 
 # noinspection PyPep8Naming
-#from ludolph-es.__init__ import __version__ as VERSION
-VERSION = '1.0'
+from es.__init__ import __version__ as VERSION
 
 DESCRIPTION = 'Erigones API plugin'
 
@@ -44,7 +43,7 @@ CLASSIFIERS = [
 ]
 
 packages = [
-    'ludolph-es',
+    'es',
 ]
 
 setup(
