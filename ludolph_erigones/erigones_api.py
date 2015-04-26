@@ -9,7 +9,7 @@ import logging
 # noinspection PyPackageRequirements
 import requests
 
-from es.__init__ import __version__ as VERSION
+from ludolph_erigones.__init__ import __version__ as VERSION
 from ludolph.command import command, parameter_required, admin_required
 from ludolph.message import red, green, blue
 from ludolph.plugins.plugin import LudolphPlugin
@@ -17,7 +17,7 @@ from ludolph.plugins.plugin import LudolphPlugin
 logger = logging.getLogger(__name__)
 
 
-class Erigones(LudolphPlugin):
+class ErigonesApi(LudolphPlugin):
     """
     Erigones API commands. EXPERIMENTAL.
 

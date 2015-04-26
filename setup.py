@@ -14,17 +14,14 @@ except ImportError:
     from distutils.core import setup
 
 # noinspection PyPep8Naming
-from es.__init__ import __version__ as VERSION
+from ludolph_erigones.__init__ import __version__ as VERSION
 
 DESCRIPTION = 'Erigones API plugin'
 
 with codecs.open('README.rst', 'r', encoding='UTF-8') as readme:
     LONG_DESCRIPTION = ''.join(readme)
 
-if sys.version_info[0] < 3:
-    DEPS = ['ludolph', 'dnspython', 'requests']
-else:
-    DEPS = ['ludolph', 'dnspython3', 'requests']
+DEPS = ['ludolph', 'requests']
 
 CLASSIFIERS = [
     'Environment :: Console',
@@ -43,7 +40,7 @@ CLASSIFIERS = [
 ]
 
 packages = [
-    'es',
+    'ludolph_erigones',
 ]
 
 setup(
