@@ -9,7 +9,7 @@ import logging
 # noinspection PyPackageRequirements
 import requests
 
-from ludolph_erigones.__init__ import __version__ as VERSION
+from ludolph_erigones import __version__
 from ludolph.command import command, parameter_required, admin_required
 from ludolph.message import red, green, blue
 from ludolph.plugins.plugin import LudolphPlugin
@@ -253,6 +253,12 @@ class ErigonesApi(LudolphPlugin):
 
         return '\n'.join(out)
 
+    # noinspection PyUnusedLocal
     @command
-    def es_version(self, msg):
-        return 'ludolph-es version: '+ VERSION
+    def erigones_version(self, msg):
+        """
+        Show version of Ludolph: Erigones API plugin.
+
+        Usage: erigones-version
+        """
+        return 'Ludolph: Erigones API plugin version: ' + __version__

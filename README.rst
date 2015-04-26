@@ -14,7 +14,7 @@ Installation
 
     pip install ludolph-es
 
-- Update Ludolph configuration file with plugin to load::
+- Add new plugin section into Ludolph configuration file::
 
     [ludolph_erigones.erigones_api]
     api_url = https://my.erigones.com/api
@@ -23,12 +23,12 @@ Installation
 
 - Reload Ludolph::
 
-    ludolph reload
+    service ludolph reload
 
 
 **Dependencies:**
 
-- `Ludolph <https://github.com/erigones/Ludolph>`_ (0.5.1+)
+- `Ludolph <https://github.com/erigones/Ludolph>`_ (0.6.0+)
 
 
 Links

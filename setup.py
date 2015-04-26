@@ -6,7 +6,6 @@
 #
 # See the LICENSE file for copying permission.
 
-import sys
 import codecs
 try:
     from setuptools import setup
@@ -14,9 +13,9 @@ except ImportError:
     from distutils.core import setup
 
 # noinspection PyPep8Naming
-from ludolph_erigones.__init__ import __version__ as VERSION
+from ludolph_erigones import __version__ as VERSION
 
-DESCRIPTION = 'Erigones API plugin'
+DESCRIPTION = 'Ludolph: Erigones API plugin'
 
 with codecs.open('README.rst', 'r', encoding='UTF-8') as readme:
     LONG_DESCRIPTION = ''.join(readme)
