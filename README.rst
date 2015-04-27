@@ -1,10 +1,10 @@
-ludolph-es
-##########
+ludolph-erigones
+################
 
 `Ludolph <https://github.com/erigones/Ludolph>`_: Erigones API plugin
 
-.. image:: https://badge.fury.io/py/ludolph-es.png
-    :target: http://badge.fury.io/py/ludolph-es
+.. image:: https://badge.fury.io/py/ludolph-erigones.png
+    :target: http://badge.fury.io/py/ludolph-erigones
 
 
 Installation
@@ -12,7 +12,7 @@ Installation
 
 - Install the latest released version using pip::
 
-    pip install ludolph-es
+    pip install ludolph-erigones
 
 - Add new plugin section into Ludolph configuration file::
 

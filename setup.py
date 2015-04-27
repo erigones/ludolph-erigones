@@ -43,13 +43,13 @@ packages = [
 ]
 
 setup(
-    name='ludolph-es',
+    name='ludolph-erigones',
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     author='Erigones',
     author_email='erigones [at] erigones.com',
-    url='https://github.com/erigones/ludolph-es/',
+    url='https://github.com/erigones/ludolph-erigones/',
     license='MIT',
     packages=packages,
     install_requires=DEPS,
