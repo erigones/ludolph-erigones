@@ -1,7 +1,7 @@
 ludolph-es
 ##########
 
-Erigones API plugin for `Ludolph <https://github.com/erigones/Ludolph>`_
+`Ludolph <https://github.com/erigones/Ludolph>`_: Erigones API plugin
 
 .. image:: https://badge.fury.io/py/ludolph-es.png
     :target: http://badge.fury.io/py/ludolph-es
