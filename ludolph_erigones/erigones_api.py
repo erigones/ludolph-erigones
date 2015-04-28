@@ -47,6 +47,7 @@ class ErigonesApi(LudolphPlugin):
         'Accept': 'application/json; indent=4',
         'Content-Type': 'application/json; indent=4',
     }
+    __version__ = __version__
 
     # noinspection PyMissingConstructor,PyUnusedLocal
     def __init__(self, xmpp, config, **kwargs):
@@ -252,13 +253,3 @@ class ErigonesApi(LudolphPlugin):
         out.append('\n**%d** servers are shown.' % len(res['result']))
 
         return '\n'.join(out)
-
-    # noinspection PyUnusedLocal
-    @command
-    def erigones_version(self, msg):
-        """
-        Show version of Ludolph: Erigones API plugin.
-
-        Usage: erigones-version
-        """
-        return 'Ludolph: Erigones API plugin version: ' + __version__
