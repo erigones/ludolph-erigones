@@ -20,7 +20,7 @@ DESCRIPTION = 'Ludolph: Erigones API plugin'
 with codecs.open('README.rst', 'r', encoding='UTF-8') as readme:
     LONG_DESCRIPTION = ''.join(readme)
 
-DEPS = ['ludolph', 'requests']
+DEPS = ['ludolph>=0.6.0', 'requests']
 
 CLASSIFIERS = [
     'Environment :: Console',
