@@ -10,7 +10,7 @@ import logging
 import requests
 
 from ludolph_erigones import __version__
-from ludolph.command import command, parameter_required, admin_required
+from ludolph.command import command, parameter_required
 from ludolph.message import red, green, blue
 from ludolph.plugins.plugin import LudolphPlugin
 
@@ -195,9 +195,8 @@ class ErigonesApi(LudolphPlugin):
 
         return status, res
 
-    @admin_required
     @parameter_required(2)
-    @command
+    @command(admin_required=True)
     def es(self, msg, action, resource, *parameters):
         """
         es - Swiss Army Knife for Erigones API (EXPERIMENTAL)
@@ -223,8 +222,7 @@ class ErigonesApi(LudolphPlugin):
         return json.dumps(out, indent=4)
 
     # noinspection PyTypeChecker
-    @admin_required
-    @command
+    @command(admin_required=True)
     def vm_list(self, msg):
         """
         Show a list of all servers.
