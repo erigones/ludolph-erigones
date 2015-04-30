@@ -10,7 +10,7 @@ import logging
 import requests
 
 from ludolph_erigones import __version__
-from ludolph.command import command, parameter_required
+from ludolph.command import CommandError, command
 from ludolph.message import red, green, blue
 from ludolph.plugins.plugin import LudolphPlugin
 
@@ -136,10 +136,10 @@ class ErigonesApi(LudolphPlugin):
         The es command. Returns (status_code, response_text).
         """
         if action not in self.actions:
-            return 0, 'ERROR: Bad action'
+            return 0, 'Bad action'
 
         if not resource or resource[0] != '/':
-            return 0, 'ERROR: Missing resource'
+            return 0, 'Missing resource'
 
         params = None
         data = None
@@ -182,7 +182,7 @@ class ErigonesApi(LudolphPlugin):
         def workbitch():  # Perform one re-login if needed
             if not self._is_authenticated():
                 logger.error('Erigones API not available')
-                return 0, 'ERROR: Erigones API not available'
+                return 0, 'Erigones API not available'
 
             return self.__es(action, resource, params=params, data=data, msg=msg)
 
@@ -195,7 +195,6 @@ class ErigonesApi(LudolphPlugin):
 
         return status, res
 
-    @parameter_required(2)
     @command(admin_required=True)
     def es(self, msg, action, resource, *parameters):
         """
@@ -210,7 +209,7 @@ class ErigonesApi(LudolphPlugin):
         status, text = self._es(msg, action, resource, *parameters)
 
         if not status:
-            return text
+            raise CommandError(text)
 
         out = {
             'action': action,
@@ -232,7 +231,7 @@ class ErigonesApi(LudolphPlugin):
         code, res = self._es(msg, 'get', '/vm/status')
 
         if code != 200:
-            return str(res)
+            raise CommandError(res)
 
         out = []
 
