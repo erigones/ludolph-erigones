@@ -31,7 +31,7 @@ class ErigonesApi(LudolphPlugin):
         password = Passw0rd
 
     """
-
+    initialized = False
     user_agent = 'es/0.3/ludolph'
     methods = {
         'get':      requests.get,
@@ -49,13 +49,9 @@ class ErigonesApi(LudolphPlugin):
     }
     __version__ = __version__
 
-    # noinspection PyMissingConstructor,PyUnusedLocal
-    def __init__(self, xmpp, config, **kwargs):
-        """
-        Initialize configuration and login to erigones.
-        """
-        self.xmpp = xmpp
-        config = dict(config)
+    def __post_init__(self):
+        # Initialize configuration and login to erigones.
+        config = self.config
 
         try:
             self.api_url = config['api_url'].rstrip('/')
@@ -64,7 +60,11 @@ class ErigonesApi(LudolphPlugin):
             logger.error('Erigones plugin configuration missing')
             raise
 
-        self._login()
+        self.initialized = self._login()
+
+    def __destroy__(self):
+        if self.initialized:
+            self._logout()
 
     def __es(self, action, resource, params=None, data=None, msg=None):
         """
@@ -108,8 +108,10 @@ class ErigonesApi(LudolphPlugin):
         if status == 200:
             logger.info('Logout successful: "%s"', text)
             self.headers.pop('Authorization', None)
+            return True
         else:
             logger.warning('Logout problem (%s): "%s"', status, text)
+            return False
 
     def _login(self):
         """
@@ -122,8 +124,10 @@ class ErigonesApi(LudolphPlugin):
         if status == 200 and isinstance(text, dict) and 'token' in text:
             logger.info('Login successful: "%s"', text['detail'])
             self.headers['Authorization'] = 'Token ' + text['token']
+            return True
         else:
             logger.error('Login problem (%s): "%s"', status, text)
+            return False
 
     def _is_authenticated(self):
         """
