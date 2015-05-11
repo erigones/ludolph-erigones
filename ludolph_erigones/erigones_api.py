@@ -1,256 +1,266 @@
 """
-This file is part of Ludolph: Erigones API plugin
+This file is part of Ludolph: Erigones SDDC API plugin
 Copyright (C) 2015 Erigones, s. r. o.
 
 See the LICENSE file for copying permission.
 """
 import json
+import time
 import logging
-# noinspection PyPackageRequirements
-import requests
 
 from ludolph_erigones import __version__
 from ludolph.command import CommandError, command
 from ludolph.message import red, green, blue
 from ludolph.plugins.plugin import LudolphPlugin
 
+from erigones_sddc_api.client import Client
+from erigones_sddc_api.exceptions import ESAPIError
+
 logger = logging.getLogger(__name__)
 
 
 class ErigonesApi(LudolphPlugin):
     """
-    Erigones API commands. EXPERIMENTAL.
+    Erigones SDDC API commands. EXPERIMENTAL.
 
-    https://my.erigones.com/static/api/doc/
-
-    Add to ludolph.cfg::
-
-        [es.erigones]
-        api_url = https://my.erigones.com/api
-        username = username@example.com
-        password = Passw0rd
-
+    https://my.erigones.com/docs/api/
     """
-    initialized = False
-    user_agent = 'es/0.3/ludolph'
-    methods = {
-        'get':      requests.get,
-        'create':   requests.post,
-        'set':      requests.put,
-        'delete':   requests.delete,
-        'options':  requests.options,
-    }
-    actions = methods.keys()
-    timeout = None
-    headers = {
-        'User-Agent': user_agent,
-        'Accept': 'application/json; indent=4',
-        'Content-Type': 'application/json; indent=4',
-    }
     __version__ = __version__
+    _actions = {
+        'post': 'POST',
+        'create': 'POST',
+        'put': 'PUT',
+        'set': 'PUT',
+        'delete': 'DELETE',
+        'get': 'GET',
+    }
+    persistent_attrs = ('_user_auth',)
 
-    def __post_init__(self):
-        # Initialize configuration and login to erigones.
+    def __init__(self, *args, **kwargs):
+        """Read Ludolph plugin configuration [ludolph_erigones.erigones_api]"""
+        super(ErigonesApi, self).__init__(*args, **kwargs)
         config = self.config
+        self._id = 0
+        self._user_es = {}
+        self._user_auth = {}
 
         try:
-            self.api_url = config['api_url'].rstrip('/')
-            self.credentials = {'username': config['username'], 'password': config['password']}
+            self._api_url = config['api_url'].rstrip('/')
         except KeyError:
-            logger.error('Erigones plugin configuration missing')
-            raise
+            raise RuntimeError('api_url is not set in erigones_api plugin configuration')
 
-        self.initialized = self._login()
+    def _get_user_es(self, user, username_or_api_key, password):
+        """Create :class:`erigones_sddc_api.Client` instance and perform Erigones SDDC API login"""
+        err = ''
 
-    def __destroy__(self):
-        if self.initialized:
-            self._logout()
+        if password:
+            logger.debug('Signing in to Erigones SDDC API using user "%s" credentials', user)
+            es = Client(api_url=self._api_url)
 
-    def __es(self, action, resource, params=None, data=None, msg=None):
-        """
-        The es http request. Returns (status_code, response_text).
-        """
-        url = self.api_url + resource
-        response_text = ''
-        r = self.methods[action](url=url, headers=self.headers, timeout=self.timeout,
-                                 params=params, data=data, allow_redirects=False, stream=True)
-        status_code = r.status_code
-
-        if 'task_id' in r.headers:  # Task status stream
-            msg_body = 'Waiting for pending task %s ...' % blue(r.headers['task_id'])
-            self.xmpp.msg_send(msg['from'].bare, msg_body, mtype=msg['type'])
-
-            for i in r.iter_content():
-                if not i.isspace():
-                    text = i + r.text
-                    text = text.strip().split('\n')
-                    status_code = int(text.pop())
-                    response_text = '\n'.join(text)
-                    break
-
+            try:
+                es.login(username_or_api_key, password).content
+            except Exception as exc:
+                err = str(exc)
         else:
-            response_text = r.text
+            logger.debug('Using user "%s" api_key - skipping Erigones SDDC API login', user)
+            es = Client(api_url=self._api_url, api_key=username_or_api_key)
+
+        if es.is_authenticated():
+            logger.info('User "%s" login successful at %s', user, es)
+        else:
+            logger.error('User "%s" login problem at %s: "%s"', user, es, err)
+
+        return es
+
+    def _es_request(self, msg, method, resource, _after_relogin=False, **params):
+        """Wrapper for getting Erigones SDDC API response with cached content and checking Erigones SDDC API errors"""
+        user = self.xmpp.get_jid(msg)
+
+        if user not in self._user_auth:
+            logger.error('Erigones SDDC API is not available for user "%s"', user)
+            raise CommandError('Erigones SDDC API is not available - use __es-login__ '
+                               'to enable API access for your account (%s)' % user)
 
         try:
-            response_text = json.loads(response_text)
-        except ValueError:
-            pass
+            es = self._user_es[user]
+        except KeyError:
+            es = self._user_es[user] = self._get_user_es(user, *self._user_auth[user])
+            _after_relogin = True
 
-        return status_code, response_text
+        self._id += 1
+        start_time = time.time()
+        logger.info('[%s-%05d] User "%s" is calling Erigones SDDC API function: "%s %s"',
+                    start_time, self._id, user, method, resource)
+        response = es.request(method, resource, **params)
 
-    def _logout(self):
-        """
-        Logout from Erigones API.
-        """
-        logger.debug('Signing out of Erigones API')
-        status, text = self.__es('get', '/accounts/logout/')
+        if response.stream:
+            self.xmpp.msg_reply(msg, 'Waiting for pending task %s ...' % blue(response.task_id), preserve_msg=True)
 
-        if status == 200:
-            logger.info('Logout successful: "%s"', text)
-            self.headers.pop('Authorization', None)
-            return True
-        else:
-            logger.warning('Logout problem (%s): "%s"', status, text)
-            return False
+        try:
+            response.content
+        except ESAPIError as exc:
+            if (exc.status_code == 403 and exc.detail == 'Authentication credentials were not provided.'
+                    and self._user_auth[user][1] and not _after_relogin):
+                logger.warning('Performing user "%s" re-login to Erigones SDDC API at %s', user, es)
 
-    def _login(self):
-        """
-        Login to Erigones API.
-        """
-        logger.debug('Signing in to Erigones API')
-        self.headers.pop('Authorization', None)
-        status, text = self.__es('create', '/accounts/login/', data=json.dumps(self.credentials))
+                if es.login(*self._user_auth[user]).ok:
+                    return self._es_request(msg, method, resource, _after_relogin=True, **params)
 
-        if status == 200 and isinstance(text, dict) and 'token' in text:
-            logger.info('Login successful: "%s"', text['detail'])
-            self.headers['Authorization'] = 'Token ' + text['token']
-            return True
-        else:
-            logger.error('Login problem (%s): "%s"', status, text)
-            return False
+            raise CommandError(str(exc))
+        finally:
+            logger.info('[%s-%05d] Erigones SDDC API function "%s %s" called by user "%s" finished in %g seconds',
+                        start_time, self._id, method, resource, user, (time.time() - start_time))
 
-    def _is_authenticated(self):
-        """
-        Return True if authorization token exists.
-        """
-        return 'Authorization' in self.headers
+        return response
 
-    def _es(self, msg, action, resource, *parameters):
-        """
-        The es command. Returns (status_code, response_text).
-        """
-        if action not in self.actions:
-            return 0, 'Bad action'
+    @staticmethod
+    def _parse_es_parameters(parameters):
+        """The es command parameters parser"""
+        params = {}
+        key = None
+        val_next = False
 
-        if not resource or resource[0] != '/':
-            return 0, 'Missing resource'
+        for i in parameters:
+            if i and i.startswith('-'):
+                _key = i[1:]
 
-        params = None
-        data = None
-        options = {}
-
-        if parameters:  # Parse arguments
-            key = None
-            val_next = False
-
-            for i in parameters:
-                if i and i[0] == '-':
-                    key = i[1:]
-                    options[key] = True
+                if _key and _key[0].isalnum():
+                    key = _key
+                    params[key] = True
                     val_next = True
                     continue
 
-                if val_next and key:
-                    _i = str(i).lower()
+            if val_next and key:
+                _i = str(i).lower()
 
-                    if _i == 'false':
-                        options[key] = False
-                    elif _i == 'true':
-                        options[key] = True
-                    elif _i == 'null':
-                        options[key] = None
+                if _i == 'false':
+                    params[key] = False
+                elif _i == 'true':
+                    params[key] = True
+                elif _i == 'null':
+                    params[key] = None
+                elif i.startswith('json::'):
+                    i = i[6:]
+                    try:
+                        i = json.loads(i)
+                    except ValueError as e:
+                        raise CommandError('Invalid json parameter %s (%s)' % (key, e))
                     else:
-                        options[key] = i
+                        params[key] = i
+                else:
+                    params[key] = i
 
-                    key = None
-                    val_next = False
+        return params
 
-        if action == 'get' or action == 'logout':
-            params = options
+    @command
+    def es_login(self, msg, username_or_api_key, password=None):
+        """
+        Sign in to Erigones SDDC API and save your custom api_key or username/password.
+
+        Usage: es-login <api_key>
+        Usage: es-login <username> <password>
+        """
+        user = self.xmpp.get_jid(msg)
+        es = self._get_user_es(user, username_or_api_key, password)
+
+        if es and es.get('/dc').ok:
+            self._user_es[user] = es
+            self._user_auth[user] = (username_or_api_key, password)
+            self._db_save()
+            return 'Successfully signed in to Erigones SDDC API (%s) and saved your (%s) credentials' % (self._api_url,
+                                                                                                         user)
         else:
-            data = json.dumps(options)
+            raise CommandError('User **%s** authentication against Erigones SDDC API (%s) failed' % (user,
+                                                                                                     self._api_url))
 
-        if resource[-1] != '/':
-            resource += '/'
+    @command
+    def es_logout(self, msg):
+        """
+        Sign out of Erigones SDDC API and delete your credentials.
 
-        def workbitch():  # Perform one re-login if needed
-            if not self._is_authenticated():
-                logger.error('Erigones API not available')
-                return 0, 'Erigones API not available'
+        Usage: es-logout
+        """
+        user = self.xmpp.get_jid(msg)
+        es = self._user_es.pop(user, None)
+        auth = self._user_auth.pop(user, None)
 
-            return self.__es(action, resource, params=params, data=data, msg=msg)
+        if auth:
+            logger.debug('Signing user "%s" out of Erigones SDDC API', user)
+            self._db_save()
 
-        status, res = workbitch()
+            if es and auth[1]:  # username/password authentication
+                try:
+                    es.logout().content
+                except Exception as exc:
+                    logger.warn('User "%s" logout problem at %s: "%s"', user, es, exc)
+                else:
+                    logger.info('User "%s" logout successful at %s', user, es)
+            else:
+                logger.info('User "%s" is using api_key or was never logged in - skipping logout at %s', user, es)
 
-        if status == 403 and res.get('detail') == 'Authentication credentials were not provided.':
-            logger.warning('Performing re-login to Erigones API')
-            self._login()
-            return workbitch()
+            return 'Successfully signed out of to Erigones SDDC API (%s) and removed your (%s) credentials' % (
+                self._api_url, user)
 
-        return status, res
+        raise CommandError('User **%s** logout from Erigones SDDC API (%s) failed: user was never logged in' % (
+            user, self._api_url))
 
     @command(admin_required=True)
     def es(self, msg, action, resource, *parameters):
         """
-        es - Swiss Army Knife for Erigones API (EXPERIMENTAL)
+        es - Swiss Army Knife for Erigones SDDC API (EXPERIMENTAL)
 
-        Usage: es action [/resource] [parameters]
+        Usage: es action </resource> [parameters]
 
           action:\t{get|create|set|delete|options}
           resource:\t/some/resource/in/api
           parameters:\t-foo baz -bar qux ...
         """
-        status, text = self._es(msg, action, resource, *parameters)
+        try:
+            method = self._actions[action.lower()]
+        except (KeyError, AttributeError):
+            raise CommandError('Invalid action or method: **%s**' % action)
 
-        if not status:
-            raise CommandError(text)
+        if not resource.startswith('/'):
+            raise CommandError('Invalid resource: **%s**' % resource)
+
+        res = self._es_request(msg, method, resource, **self._parse_es_parameters(parameters))
 
         out = {
             'action': action,
             'resource': resource,
-            '**status**': status,
-            '**text**': text,
+            'dc': res.dc,
+            'task_id': res.task_id,
+            '**status**': res.status_code,
+            '**result**': res.content.result
         }
 
         return json.dumps(out, indent=4)
 
-    # noinspection PyTypeChecker
     @command(admin_required=True)
-    def vm_list(self, msg):
+    def vm(self, msg, dc=None):
         """
         Show a list of all servers.
 
-        Usage: vm-list
+        Usage: vm [dc]
         """
-        code, res = self._es(msg, 'get', '/vm/status')
-
-        if code != 200:
-            raise CommandError(res)
-
+        res = self._es_request(msg, 'GET', '/vm', dc=dc, full=True).content
         out = []
 
-        for vm in res['result']:
-            if vm['status'] == 'running':
+        def colorify(status):
+            if status == 'running':
                 color = green
-            elif vm['status'] == 'stopped' or vm['status'] == 'stopping':
+            elif status == 'stopped' or vm['status'] == 'stopping':
                 color = red
-            elif vm['status'] == 'pending':
+            elif status == 'pending':
                 color = blue
             else:
-                color = lambda x: x
+                return status
 
-            out.append('**%s** (%s)\t%s\t(%d)' % (vm['hostname'], vm['alias'], color(vm['status']), len(vm['tasks'])))
+            return color(status)
 
-        out.append('\n**%d** servers are shown.' % len(res['result']))
+        for vm in res.result:
+            out.append('**%s** (%s)\t%s' % (vm['hostname'], vm['alias'], colorify(vm['status'])))
+
+        out.append('\n**%d** servers are shown in __%s__ datacenter.' % (len(res.result), res.dc))
 
         return '\n'.join(out)

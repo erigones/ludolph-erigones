@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ludolph: Erigones API plugin
+# This file is part of Ludolph: Erigones SDDC API plugin
 # Copyright (C) 2015 Erigones, s. r. o.
 #
 # See the LICENSE file for copying permission.
@@ -15,12 +15,12 @@ except ImportError:
 # noinspection PyPep8Naming
 from ludolph_erigones import __version__ as VERSION
 
-DESCRIPTION = 'Ludolph: Erigones API plugin'
+DESCRIPTION = 'Ludolph: Erigones SDDC API plugin'
 
 with codecs.open('README.rst', 'r', encoding='UTF-8') as readme:
     LONG_DESCRIPTION = ''.join(readme)
 
-DEPS = ['ludolph>=0.6.0', 'requests']
+DEPS = ['ludolph>=0.6.0', 'erigones-sddc-api']
 
 CLASSIFIERS = [
     'Environment :: Console',
