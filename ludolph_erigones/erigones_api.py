@@ -106,7 +106,15 @@ class ErigonesApi(LudolphPlugin):
                 if es.login(*self._user_auth[user]).ok:
                     return self._es_request(msg, method, resource, _after_relogin=True, **params)
 
-            raise CommandError(str(exc))
+            if isinstance(exc.detail, (dict, list)):  # Create a bit nicer output
+                try:
+                    err = json.dumps(exc.detail, indent=4)
+                except ValueError:
+                    err = str(exc.detail)
+            else:
+                err = str(exc.detail)
+
+            raise CommandError('%s %s: %s' % (exc.__class__.__name__, exc.status_code, err))
         finally:
             logger.info('[%s-%05d] Erigones SDDC API function "%s %s" called by user "%s" finished in %g seconds',
                         start_time, self._id, method, resource, user, (time.time() - start_time))
