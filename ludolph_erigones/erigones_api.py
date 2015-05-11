@@ -160,6 +160,19 @@ class ErigonesApi(LudolphPlugin):
 
         return params
 
+    @staticmethod
+    def _vm_status_color(status):
+        if status.startswith('running'):
+            color = green
+        elif status.startswith('stopped') or status == 'stopping':
+            color = red
+        elif status == 'pending':
+            color = blue
+        else:
+            return status
+
+        return color(status)
+
     @command
     def es_login(self, msg, username_or_api_key, password=None):
         """
@@ -254,20 +267,8 @@ class ErigonesApi(LudolphPlugin):
         res = self._es_request(msg, 'GET', '/vm', dc=dc, full=True).content
         out = []
 
-        def colorify(status):
-            if status == 'running':
-                color = green
-            elif status == 'stopped' or vm['status'] == 'stopping':
-                color = red
-            elif status == 'pending':
-                color = blue
-            else:
-                return status
-
-            return color(status)
-
         for vm in res.result:
-            out.append('**%s** (%s)\t%s' % (vm['hostname'], vm['alias'], colorify(vm['status'])))
+            out.append('**%s** (%s)\t%s' % (vm['hostname'], vm['alias'], self._vm_status_color(vm['status'])))
 
         out.append('\n**%d** servers are shown in __%s__ datacenter.' % (len(res.result), res.dc))
 
