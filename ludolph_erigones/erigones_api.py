@@ -262,7 +262,7 @@ class ErigonesApi(LudolphPlugin):
         """
         Show a list of all servers.
 
-        Usage: vm [dc]
+        Usage: vm [dc name]
         """
         res = self._es_request(msg, 'GET', '/vm', dc=dc, full=True).content
         out = []
@@ -273,3 +273,33 @@ class ErigonesApi(LudolphPlugin):
         out.append('\n**%d** servers are shown in __%s__ datacenter.' % (len(res.result), res.dc))
 
         return '\n'.join(out)
+
+    @command(admin_required=True, stream_output=True)
+    def tasklog_report(self, msg, last=86400, dc=None):
+        """
+        Show task log statistics from one or all datacenters. Default time period is 1 day.
+
+        Usage: tasklog-report [time period in seconds] [dc name]
+        """
+        try:
+            last = int(last)
+        except (ValueError, TypeError):
+            raise CommandError('Invalid integer: __%s__' % last)
+
+        if dc:
+            dcs = [dc]
+        else:
+            dcs = self._es_request(msg, 'GET', '/dc').content.result
+
+        out = 'Task log activity in **%(dc)s** datacenter for last **' + str(last) + '** seconds:\n' \
+              'Pending: %(pending)s\nSucceeded: %(succeeded)s\nFailed: %(failed)s\nRevoked: %(revoked)s\n--'
+
+        for dc_name in dcs:
+            res = self._es_request(msg, 'GET', '/task/log/report', last=last, dc=dc_name).content
+            stats = res.result
+            stats['dc'] = res.dc
+
+            if stats['failed']:
+                stats['failed'] = red(stats['failed'])
+
+            yield out % stats
