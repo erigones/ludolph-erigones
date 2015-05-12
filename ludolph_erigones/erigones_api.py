@@ -292,7 +292,7 @@ class ErigonesApi(LudolphPlugin):
             dcs = self._es_request(msg, 'GET', '/dc').content.result
 
         out = 'Task log activity in **%(dc)s** datacenter for last **' + str(last) + '** seconds:\n' \
-              'Pending: %(pending)s\nSucceeded: %(succeeded)s\nFailed: %(failed)s\nRevoked: %(revoked)s\n--'
+              'Pending: %(pending)s\tSucceeded: %(succeeded)s\tFailed: %(failed)s\tRevoked: %(revoked)s\n--'
 
         for dc_name in dcs:
             res = self._es_request(msg, 'GET', '/task/log/report', last=last, dc=dc_name).content
